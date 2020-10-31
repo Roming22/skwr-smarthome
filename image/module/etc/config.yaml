@@ -1,0 +1,20 @@
+--- 
+rooms: 
+  Basement: 
+    lights: ["192.168.72.31", "192.168.72.32"]
+    scenes: 
+      - 
+        time: "00:00-07:00"
+        name: Night
+      - 
+        time: "07:00-08:00"
+        name: Soft
+      - 
+        time: "08:00-17:00"
+        name: Day
+      - 
+        time: "17:00-21:30"
+        name: Soft
+      - 
+        time: "21:30-24:00"
+        name: Night

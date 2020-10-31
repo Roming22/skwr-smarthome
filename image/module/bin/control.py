@@ -2,6 +2,7 @@
 import multiprocessing as mp
 import os
 import socket
+import yaml
 from time import sleep, strftime
 from api.tuya import Tuya
 
@@ -20,23 +21,18 @@ def _is_up(ip):
 
 
 class Room:
-    def __init__(self, name):
+    def __init__(self, name, cfg):
         self.name = name
-        self.lights = self._get_status(["192.168.72.31", "192.168.72.32"])
+        self.lights = self._get_status(cfg["lights"])
+        self.scenes = {}
+        for scene in cfg["scenes"]:
+            start = int(scene["time"].split("-")[0].replace(":", ""))
+            stop = int(scene["time"].split("-")[1].replace(":", ""))
+            scene_name = scene["name"]
+            self.scenes[(start, stop)] = Tuya.get_objects(
+                type="scene", name=f"{name}: {scene_name}"
+            )[0]
         print(f"{strftime('%H:%M:%S')}: Status:{self.lights}")
-        self.scenes = {
-            (0, 700): "Night",
-            (700, 800): "Soft",
-            (800, 1700): "Daylight",
-            (1700, 2130): "Soft",
-            (2130, 2400): "Night",
-        }
-        self.scenes = {
-            (int(k[0]), int(k[1])): Tuya.get_objects(type="scene", name=f"{name}: {v}")[
-                0
-            ]
-            for k, v in self.scenes.items()
-        }
 
     @staticmethod
     def _get_status(ips):
@@ -71,9 +67,14 @@ class Room:
 
 
 def main():
-    basement = Room("Basement")
+    with open("/opt/module/etc/config.yaml", "r") as file:
+        config = yaml.full_load(file)
+    rooms = []
+    for name, cfg in config["rooms"].items():
+        rooms.append(Room(name, cfg))
     while True:
-        basement.refresh()
+        for room in rooms:
+            room.refresh()
         sleep(0.5)
 
 
